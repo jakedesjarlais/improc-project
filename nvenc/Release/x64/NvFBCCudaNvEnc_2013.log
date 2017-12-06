@@ -1,0 +1,6 @@
+﻿  NvFBCCudaNvEnc.cpp
+  NVFBC_GLOBAL_FLAGS_STEREO_BUFFER flag will be deprecated, and will not be available from next release.
+     Creating library C:\Users\andre\devel\capture-samples\NvFBC\NvFBCCudaNvEnc\\..\..\Release\x64\NvFBCCudaNvEnc.lib and object C:\Users\andre\devel\capture-samples\NvFBC\NvFBCCudaNvEnc\\..\..\Release\x64\NvFBCCudaNvEnc.exp
+  Generating code
+  Finished generating code
+  NvFBCCudaNvEnc_2013.vcxproj -> C:\Users\andre\devel\capture-samples\NvFBC\NvFBCCudaNvEnc\\..\..\Release\x64\NvFBCCudaNvEnc.exe

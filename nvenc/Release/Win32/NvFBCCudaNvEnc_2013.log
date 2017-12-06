@@ -1,0 +1,12 @@
+﻿  Compiling CUDA source file kernels.cu...
+  
+  C:\Program Files (x86)\NVIDIA Corporation\NVIDIA Capture SDK\samples\NvFBC\NvFBCCudaNvEnc>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0\bin\nvcc.exe" -gencode=arch=compute_30,code=\"sm_30,compute_30\" --use-local-env --cl-version 2013 -ccbin "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin" -x cu  -I../../../inc -I../../Util -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0/include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.0\include"     --keep-dir Release -maxrregcount=0  --machine 32 --compile -cudart static     -DWIN32 -D_CRT_SECURE_NO_WARNINGS -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi  /MT " -o Release\Win32\kernels.cu.obj "C:\Program Files (x86)\NVIDIA Corporation\NVIDIA Capture SDK\samples\NvFBC\NvFBCCudaNvEnc\kernels.cu" 
+  kernels.cu
+  Encoder.cpp
+  NvFBCCudaNvEnc.cpp
+  NVFBC_GLOBAL_FLAGS_STEREO_BUFFER flag will be deprecated, and will not be available from next release.
+  Generating Code...
+     Creating library C:\Program Files (x86)\NVIDIA Corporation\NVIDIA Capture SDK\samples\NvFBC\NvFBCCudaNvEnc\\..\..\Release\Win32\NvFBCCudaNvEnc.lib and object C:\Program Files (x86)\NVIDIA Corporation\NVIDIA Capture SDK\samples\NvFBC\NvFBCCudaNvEnc\\..\..\Release\Win32\NvFBCCudaNvEnc.exp
+  Generating code
+  Finished generating code
+  NvFBCCudaNvEnc_2013.vcxproj -> C:\Program Files (x86)\NVIDIA Corporation\NVIDIA Capture SDK\samples\NvFBC\NvFBCCudaNvEnc\\..\..\Release\Win32\NvFBCCudaNvEnc.exe
