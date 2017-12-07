@@ -9,11 +9,11 @@ from lz4.frame import compress, decompress
 
 PORT = 55000
 
-WINDOW = (1920,1080)
+WINDOW = (1600,1200)
 pygame.init();
 screen = pygame.display.set_mode(WINDOW);
 
-image = pygame.image.load('../images/loading-screen.jpg');
+image = pygame.image.load('../images/loading-screen-1600x1200.jpg');
 
 init_server(PORT)
 
