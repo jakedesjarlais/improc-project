@@ -7,9 +7,9 @@ def send_data(data, recv_ip='127.0.0.1', port=55000):
     while True:
         try:
             sock.connect((recv_ip, port))
+            break
         except:
             pass;
-
 
     idx1 = 0
     idx2 = 65536
@@ -23,13 +23,19 @@ def send_data(data, recv_ip='127.0.0.1', port=55000):
 
     sock.close()
 
-# Recieves data from any incoming connection on specified port 
-def recv_data(port='55000'):
+sock = 0
+
+def init_server(port='55000'):
+    global sock
     sock = socket.socket()
     sock.bind(('0.0.0.0', port))
-
     sock.listen(5)
-    conn, addr = s.accept()
+
+# Recieves data from any incoming connection on specified port 
+def recv_data(port='55000'):
+    global sock
+
+    conn, addr = sock.accept()
 
     data_chunks = []
     while True:
