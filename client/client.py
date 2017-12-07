@@ -1,24 +1,31 @@
+import sys, os
+sys.path.append("../common");
+import time
+import pygame
 
-import socket
-#import huffcode
- 
-SERVER_IP = '127.0.0.1'
-PORT = 42050
+from data_transfer import send_data
+from huffcode import Encoder, Decoder
+from lz4.frame import compress, decompress
+
+PORT = 55000
+
+WINDOW = (1920,1080)
+pygame.init();
+screen = pygame.display.set_mode(WINDOW);
 
 
-s = socket.socket()
-s.connect((SERVER_IP, PORT))
+done = False
+while not done:
+    compressed_data = recv_data(port);
+    data = decompress(compressed_data);
 
-f = open('input.jpg', 'rb')
+    image = pygame.image.frombuffer(data, WINDOW, 'RGB');
 
-print "Sending Data ...."  
-while True:      
-    data_chunk = f.read(65536);
-    if not data_chunk:
-        break;
-    s.sendall(data_chunk);
+    screen.blit(image, (0,0));
+    pygame.display.flip()
 
-f.close()
-print "Sending Complete"
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            done = True
 
-s.close()
+jpygame.quit()

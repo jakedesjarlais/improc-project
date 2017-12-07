@@ -1,29 +1,18 @@
 import socket
+import pygame
+import time
+
+from mss import mss
  
-HOST = '0.0.0.0'
-PORT = 42050
+DEST_IP = '192.168.0.3'
+PORT = 55000
+
+MONITOR = {'top': 0, 'left': 0, 'width': 1920, 'height': 1080}
 
 
-s = socket.socket()
-s.bind((HOST, PORT))
 
-print "Server running", HOST, PORT
-s.listen(5)
-conn, addr = s.accept()
-print'Connected by', addr
+fb_grabber = mss();
 
-chunks = []
 while True:
-    chunk = conn.recv(65536) 
-    if not chunk:
-        break                
-    chunks.append(chunk);
-      
-print "Done Receiving"
-conn.close()
-
-data = b''.join(chunks)
-
-output_file = open('network.jpg', 'wb')
-output_file.write(data);
-output_file.close();
+    pixels = fb_grabber.grab(monitor);
+    send_data(pixel.rgb);

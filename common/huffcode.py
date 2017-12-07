@@ -163,29 +163,30 @@ class Decoder(object):
         self.array_codes = array.array('B', array_codes)
         fp.close()
 
+        
+''' Example on how to use
+input_file = 'input.jpg'
+encoded_file = 'encoded.jpg'
+output_file = 'output.jpg'
 
-if __name__=='__main__':
-    input_file = 'input.jpg'
-    encoded_file = 'encoded.jpg'
-    output_file = 'output.jpg'
+input_fp = open(input_file, 'rb');
+bin_input = input_fp.read();
 
-    input_fp = open(input_file, 'rb');
-    bin_input = input_fp.read();
-
-    enc = Encoder(bin_input);
-    bin_encoding = enc.encode();
-
-
+enc = Encoder(bin_input);
+bin_encoding = enc.encode();
 
 
-    encoded_fp = open(encoded_file, 'wb');
-    encoded_fp.write(bin_encoding);
+
+
+encoded_fp = open(encoded_file, 'wb');
+encoded_fp.write(bin_encoding);
 
     
     
 
-    dec = Decoder(bin_encoding);
-    bin_output = dec.decode();
+dec = Decoder(bin_encoding);
+bin_output = dec.decode();
 
-    output_fp = open(output_file, 'wb');
-    output_fp.write(bin_output);
+output_fp = open(output_file, 'wb');
+output_fp.write(bin_output);
+'''
