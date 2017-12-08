@@ -1,0 +1,144 @@
+import sys, os
+sys.path.append("../common");
+
+import time, pygame, pywt, numpy, StringIO, image_slicer, scipy
+
+from data_transfer import recv_data, init_server
+from huffcode import Encoder, Decoder
+from lz4.frame import compress, decompress
+from mss import mss
+from numpy import array
+from numpy import reshape
+from PIL import Image
+from scipy import fftpack
+
+
+
+BLOCK_SIZE = 32
+THRESHOLD = .0004
+
+
+
+def dct2(sub_image):
+    dct_1d = scipy.fftpack.dct(sub_image, axis=0,norm='ortho')
+    return scipy.fftpack.dct(dct_1d, axis=1, norm='ortho')
+
+def idct2(sub_image):
+    idct_1d = scipy.fftpack.idct(sub_image, axis=0 , norm='ortho')
+    return scipy.fftpack.idct(idct_1d, axis=1 , norm='ortho')
+
+def dct_compress_plane(image, size, block_size):
+    dct = numpy.zeros((size[0],size[1]), dtype='complex');
+
+    for i in range(0,size[0],block_size):
+        for j in range(0,size[1],block_size):
+            dct[i:i+block_size, j:j+block_size] = dct2(image[i:i+block_size, j:j+block_size]);
+
+    return dct;
+
+def idct_decompress_plane(image, size, block_size):
+    idct = numpy.zeros((size[0],size[1]));
+
+    for i in range(0,size[0],block_size):
+        for j in range(0,size[1],block_size):
+            idct[i:i+block_size, j:j+block_size] = idct2( image[i:i+block_size,j:j+block_size] )
+
+    return idct;
+
+
+
+def dct_compress(image_str, size=(1920,1080, 3)):
+    image_data = numpy.frombuffer(image_str, dtype='uint8');
+    image_data = numpy.reshape(image_data, size)
+
+    r = image_data[..., 0]
+    g = image_data[..., 1]
+    b = image_data[..., 2]
+
+    r_compressed = dct_compress_plane(r, size, BLOCK_SIZE)
+    g_compressed = dct_compress_plane(g, size, BLOCK_SIZE)
+    b_compressed = dct_compress_plane(b, size, BLOCK_SIZE)
+
+    r_threshold = r_compressed * (abs(r_compressed) > (THRESHOLD * numpy.max(r_compressed)))
+    g_threshold = g_compressed * (abs(g_compressed) > (THRESHOLD * numpy.max(g_compressed)))
+    b_threshold = b_compressed * (abs(b_compressed) > (THRESHOLD * numpy.max(b_compressed)))
+
+    return (r_threshold,g_threshold,b_threshold);
+
+
+def dct_decompress(image_data, size=(1920,1080,3)):
+
+    r, g, b = image_data
+
+    image = numpy.zeros(size, 'uint8');
+
+    image[..., 0] = idct_decompress_plane(r, size, BLOCK_SIZE)
+    image[..., 1] = idct_decompress_plane(g, size, BLOCK_SIZE)
+    image[..., 2] = idct_decompress_plane(b, size, BLOCK_SIZE)
+
+    return pygame.image.frombuffer(image, WINDOW, 'RGB');
+
+
+
+
+
+
+
+WINDOW = (1024,1024)
+MONITOR = {'top': 0, 'left': 0, 'width': 1024, 'height': 1024}
+
+pygame.init();
+screen = pygame.display.set_mode(WINDOW);
+
+fb_grabber = mss();
+pixels = fb_grabber.grab(MONITOR);
+
+start = time.time()
+compressed_image = dct_compress(pixels.rgb, (1024,1024,3))
+image = dct_decompress(compressed_image, (1024,1024,3))
+end = time.time();
+
+print 'Time to compress is:', (end-start)
+
+screen.blit(image, (0,0));
+pygame.display.flip()
+
+
+done = False
+while not done:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            done = True
+
+pygame.quit()
+
+
+
+
+
+
+
+
+
+
+
+'''
+def split_to_blocks(color_plane, size, block_size):
+   return numpy.array([color_plane[i:i+block_size, j:j+block_size]
+                       for j in reversed(range(0,size[0],block_size))
+                       for i in range(0,size[1],block_size)])
+
+def join(split_color_plane, size, block_size):
+    joined = list();
+
+    count = 0
+    for i in range(0,size[1]/block_size):
+        for j in range(0,block_size):
+            arr = numpy.array([]);
+            for k in range(0,size[0]/block_size):
+                tmp_arr = reversed(split_color_plane[i*(size[1]/block_size) + k, 0:block_size, j])
+                arr = numpy.append(arr, tmp_arr);
+            joined.append(arr);
+
+    return joined
+'''

@@ -1,0 +1,118 @@
+import sys, os
+sys.path.append("../common");
+
+import time, pygame
+
+from data_transfer import recv_data, init_server
+from huffcode import huffman_decompress
+from wavelet_compress import wavelet_decompress
+from dct_compress import dct_decompress
+from lz4.frame import decompress
+from parse_args import parse_args
+
+
+
+# Project settings
+PORT = 5000
+WINDOW = (1920,1080)
+LOADING_IMAGE = '../../images/loading-screen-1920x1080.jpg'
+
+HELP_MESSAGE =('USAGE: The client script displays frames streamed from the host script.\n'
+               'Note that the client script MUST be started before the host script\n'
+               'and the compression types of both must match.\n'
+               '\n'
+               '       python host.py [OPTIONS] [LOSSY] [LOSSLESS]\n'
+               '\n' 
+               '       OPTIONS\n'
+               '           --help to display this message\n'
+               '           --ip to set the destination IP Address\n'
+               '           --raw to indicate no compression. Note that this cannot be\n'
+               '                 included with any compression flags\n'
+               '\n'
+               '       LOSSY COMPRESSION TYPES\n'
+               '           --wavelet for Wavelet based compression\n'
+               '           --wavetype to indicate the wavelet type. See PyWave for list\n'
+               '                      of wavetype options. Note this will only\n'
+               '                      take effect when the dct option is selected\n'
+               '           --dct for block based DCT compression. Block size of 20\n'
+               '\n'
+               '       LOSSLESS COMPRESSION TYPES\n'
+               '           --huffman for huffman encoding\n'
+               '           --lz4 for fast LZ4 encoding\n')
+ 
+
+
+
+# Parse user arguements
+args = parse_args(sys.argv)
+if (args['HELP']):
+    print HELP_MESSAGE
+    quit()
+
+# Use PyGame as it is very efficient at buffer swaps to a canvas
+pygame.init();
+
+screen = pygame.display.set_mode(WINDOW);
+image = pygame.image.load(LOADING_IMAGE);
+
+# Initialize server to listen for new frames sent from the host
+init_server(PORT)
+
+# Data buffers
+data = 0
+compressed_data = 0
+
+done = False
+frame_count = 0
+start_time_fps = time.time();
+cum_time_compression = 0
+
+while not done:
+    # Display the next image
+    # display the loading screen image at the start
+    screen.blit(image, (0,0));
+    pygame.display.flip()
+
+    # Allow user to quit the app
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            done = True
+
+    data = recv_data(PORT);
+
+    # Decompress data based on user input
+    start_time_decompression = time.time();
+    if (not args['RAW']):
+        if (args['WAVELET']):
+            if (args['WAVETYPE'] is not None):
+                data = wavelet_decompress(data, WINDOW, args[WAVETYPE]);
+            else:
+                data = wavelet_decompress(data, WINDOW);
+        elif (args['DCT']):
+            data = dct_decompress(data);
+
+        if (args['LZ4']):
+            data = decompress(data);
+        elif (args['HUFFMAN']):
+            data = huffman_decompress(data); 
+    end_time_decompression = time.time();
+
+    # Cumulative time for decompression
+    cum_time_compression = cum_time_compression + (end_time_decompression - start_time_decompression)
+
+    # Convert to PyGame image to display
+    if (args['RAW']):
+        image = pygame.image.fromstring(data, WINDOW, 'RGB');
+    else:
+        print 'Current FPS:', float(1)/(end_time_decompression - start_time_decompression)
+        image = pygame.image.frombuffer(data, WINDOW, 'RGB');
+
+    frame_count = frame_count + 1
+
+end_time_fps = time.time();
+
+# Print stats
+print 'Average decompression time:', cum_time_compression/frame_count, ''
+print 'Streamed with an average FPS:', frame_count/(end_time_fps - start_time_fps)
+
+pygame.quit()

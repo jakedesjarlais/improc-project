@@ -1,0 +1,130 @@
+import sys, os
+sys.path.append("../common");
+
+import time, pygame, pywt, numpy, StringIO, cPickle
+
+from data_transfer import recv_data, init_server
+from huffcode import Encoder, Decoder
+from lz4.frame import compress, decompress
+from mss import mss
+from numpy import array
+from numpy import reshape
+from PIL import Image
+
+THRESHOLD = 5
+
+def wavelet_compress(image_str, size=(1920,1080), wavelet='db1'):
+    # Convert image to usable image object
+    image_data = numpy.frombuffer(image_str, dtype='uint8');
+    image_data = numpy.reshape(image_data, (size[0],size[1],3))
+
+    # RED
+    cA, (cH, cV, cD) = pywt.dwt2(image_data[..., 0], wavelet);
+
+    cA = pywt.threshold(cA, THRESHOLD);
+    cH = pywt.threshold(cH, THRESHOLD);
+    cV = pywt.threshold(cV, THRESHOLD);
+    cD = pywt.threshold(cD, THRESHOLD);
+
+    wav_r = cA, (cH, cV, cD)
+
+    # GREEN
+    cA, (cH, cV, cD) = pywt.dwt2(image_data[..., 1], wavelet);
+
+    cA = pywt.threshold(cA, THRESHOLD);
+    cH = pywt.threshold(cH, THRESHOLD);
+    cV = pywt.threshold(cV, THRESHOLD);
+    cD = pywt.threshold(cD, THRESHOLD);
+
+    wav_g = cA, (cH, cV, cD)
+
+    # BLUE
+    cA, (cH, cV, cD) = pywt.dwt2(image_data[..., 2], wavelet);
+
+    cA = pywt.threshold(cA, THRESHOLD);
+    cH = pywt.threshold(cH, THRESHOLD);
+    cV = pywt.threshold(cV, THRESHOLD);
+    cD = pywt.threshold(cD, THRESHOLD);
+
+    wav_b = cA, (cH, cV, cD)
+
+    wav = (wav_r, wav_g, wav_b);
+
+    return cPickle.dumps(wav);
+
+def wavelet_decompress(data, size=(1920,1080), wavelet='db1'):
+    data = cPickle.loads(data)
+    wav_r, wav_g, wav_b = data
+
+    iwav_r = pywt.idwt2(wav_r, wavelet);
+    iwav_g = pywt.idwt2(wav_g, wavelet);
+    iwav_b = pywt.idwt2(wav_b, wavelet);
+
+    image_data = numpy.zeros((size[0],size[1], 3), 'uint8');
+    image_data[..., 0] = numpy.clip(iwav_r, 0, 255)
+    image_data[..., 1] = numpy.clip(iwav_g, 0, 255)
+    image_data[..., 2] = numpy.clip(iwav_b, 0, 255)
+
+    return image_data;
+
+
+
+''' Attempt at HAAR transform. Hangs for some reason
+
+def haar_matrix(n, normalized=False):
+    # Allow only size n of power 2
+    n = 2**numpy.ceil(numpy.log2(n))
+    if n > 2:
+        h = haar_matrix(n / 2)
+    else:
+        return numpy.array([[1, 1], [1, -1]])
+
+    # calculate upper haar part
+    h_n = numpy.kron(h, [1, 1])
+    # calculate lower haar part 
+    if normalized:
+        h_i = numpy.sqrt(n/2)*numpy.kron(numpy.eye(len(h)), [1, -1])
+    else:
+        h_i = numpy.kron(numpy.eye(len(h)), [1, -1])
+    # combine parts
+    h = numpy.vstack((h_n, h_i))
+    return h
+
+def dwt(x):
+    H = haar_matrix(x.shape[0])
+    x = x.ravel()
+    #Zero pad to next power of 2
+    x = numpy.hstack((x, numpy.zeros(H.shape[1] - x.shape[0])))
+    return numpy.dot(H, x)
+
+def idwt(x):
+    H = haar_matrix(x.shape[0])
+    x = x.ravel()
+    #Zero pad to next power of 2
+    x = numpy.hstack((x, numpy.zeros(H.shape[0] - x.shape[0])))
+    return numpy.dot(H.T, x)
+
+def wavelet_threshold(data, threshold):
+    soft = numpy.abs(data) - threshold
+    data = numpy.sign(data) * (soft > 0) * soft
+    return data
+
+def dwt2d(x):
+    H = haar_matrix(x.shape[0])
+    return numpy.dot(numpy.dot(H, x), H.T)       
+
+def idwt2d(x):
+    H = haar_matrix(x.shape[0])
+    return numpy.dot(numpy.dot(H.T, x), H)       
+
+def wavelet_compress_haar(image_str, size=(1920,1080)):
+    # Convert str to usable image object
+    image = Image.frombuffer('RGB', size, image_str)
+    image_array = numpy.fromstring(image.tobytes(), dtype='uint8');
+
+    wavelet_coef = dwt2d(image_array)
+    return wavelet_threshold(wavelet_coef, THRESHOLD)
+
+def wavelet_decompress_haar(data):
+    return idwt2d(data)
+'''

@@ -1,14 +1,23 @@
 
-import socket
- 
+import socket, time
+
+
+# Time out time in seconds
+TIMEOUT = 10
+
+
+
 def send_data(data, recv_ip='127.0.0.1', port=55000):
     sock = socket.socket()
 
-    while True:
+    timeout_start = time.time();
+    time_waiting = 0;
+    while time_waiting < TIMEOUT:
         try:
-            sock.connect((recv_ip, port))
-            break
+            sock.connect((recv_ip, port));
+            break;
         except:
+            time_waiting = time.time() - timeout_start;
             pass;
 
     idx1 = 0
@@ -38,11 +47,18 @@ def recv_data(port='55000'):
     conn, addr = sock.accept()
 
     data_chunks = []
-    while True:
+    start_time = time.time()
+    transfer_time = 0
+    while transfer_time < TIMEOUT:
         chunk = conn.recv(65536) 
         if not chunk:
             break                
         data_chunks.append(chunk);
+        transfer_time = time.time() - start_time
+
+    if (transfer_time >= TIMEOUT):
+        return 0
+
       
     conn.close()
     return b''.join(data_chunks)
